@@ -375,6 +375,337 @@ def mirrorGeneric(compName, secNum):
 	cmds.delete(comp.buildLs)
 
 
+
+
+class head(object):
+
+	def getTransRotLs(self, jntLs):
+		rstLs = []
+		for i in xrange(len(jntLs)):
+			crtAttrLs = []
+			crtAttrLs += [cmds.getAttr(jntLs[i] + ".translate")[0]]
+			crtAttrLs += [cmds.getAttr(jntLs[i] + ".jointOrient")[0]]
+			rstLs += [crtAttrLs]
+		return rstLs
+
+	def setTransRotLs(self, jntLs, attrLs):
+		for i in xrange(len(jntLs)):
+			cmds.setAttr(jntLs[i] + ".translate", attrLs[i][0][0], attrLs[i][0][1], attrLs[i][0][2], type = "double3")
+			cmds.setAttr(jntLs[i] + ".jointOrient", attrLs[i][1][0], attrLs[i][1][1], attrLs[i][1][2], type = "double3")
+			cmds.setAttr(jntLs[i] + ".rotate", 0,0,0, type = "double3")
+			cmds.setAttr(jntLs[i] + ".scale", 1,1,1, type = "double3")
+
+	def createCtrl(self, pointLs, shapeType, ctrlName):
+		if shapeType == "circle":
+			ctrl = cmds.circle(name = ctrlName)[0]
+			for i in xrange(len(pointLs)):
+				cmds.xform(ctrl+".cv[" + str(i) + "]", worldSpace = True, translation = pointLs[i])
+			return ctrl
+		else:
+			ctrl = cmds.curve(point = pointLs, name = ctrlName, degree = 1)
+			return ctrl
+
+	def createJointChain(self, nameLs, transRotLs):
+		prevJnt = None
+		for i in xrange(len(nameLs)):
+			cmds.select(clear = True)
+			crtJnt = cmds.joint(name = nameLs[i])
+			cmds.select(clear = True)
+			if prevJnt != None:
+				cmds.parent(crtJnt, prevJnt)
+			prevJnt = crtJnt
+		self.setTransRotLs(nameLs, transRotLs)
+	def __init__(self):
+		self.compName = "head"
+		self.buildSuf = "_build"
+		self.secNum = 2
+		self.buildJntNum = self.secNum + 1
+		self.jawPrefixLs = ["jaw_upper", "jaw_lower"]
+		self.tipPrefix = "_tip"
+		self.gillPrefixLs = ["Lf_gill"]
+		self.rtGillPrefixLs = ["Rt_grill"]
+		self.jawBuildLs = []
+		self.jawTipBuildLs = []
+		self.bnSuf = "_jnt"
+		self.ctrlSuf = "_ctrl"
+		self.refSuf = "_ref"
+		self.autoSuf = "_auto"
+		self.shaperSuf = "_shaper"
+		self.CTRLname = self.compName + "_CTRL_GRP"
+		self.RIGname = self.compName + "_RIG_GRP"
+
+
+		for i in xrange(len(self.jawPrefixLs)):
+			self.jawBuildLs += [self.jawPrefixLs[i] + self.buildSuf]
+			self.jawTipBuildLs += [self.jawPrefixLs[i] + self.tipPrefix + self.buildSuf]
+		
+
+		self.gillBuildLs = []
+		self.gillTipBuildLs = []
+		for i in xrange(len(self.gillPrefixLs)):
+			self.gillBuildLs +=[self.gillPrefixLs[i] + self.buildSuf]
+			self.gillTipBuildLs += [self.gillPrefixLs[i] + self.tipPrefix + self.buildSuf] 
+		self.headBuildLs = []
+		for i in xrange(self.buildJntNum):
+			self.headBuildLs += [self.compName + "_" + str(i+1) + self.buildSuf]
+
+		self.headBuildTransRotLs = [((0, 0, 0), (0, -90, 0))]
+		for i in xrange(self.buildJntNum-1):
+			self.headBuildTransRotLs += [((1, 0, 0), (0, 0, 0))]
+
+		self.jawBuildTransRotLs = [((0.401, 0, 0), (0, 0, 30)), ((0.401, -0.132, 0), (0, 0, 0))]
+		self.gillBuildTransRotLs = [((0.339, 0, -0.384), (0, 160, 0))]
+
+		self.jawBnLs = []
+		self.jawCtrlLs = []
+		for i in xrange(len(self.jawPrefixLs)):
+			self.jawBnLs += [self.jawPrefixLs[i] + self.bnSuf]
+			self.jawCtrlLs += [self.jawPrefixLs[i] + self.ctrlSuf]
+		self.gillBnLs = [self.gillPrefixLs[0] + self.bnSuf]
+		self.gillCtrlLs = [self.gillPrefixLs[0] + self.ctrlSuf]
+		self.rtGillCtrlLs = [self.rtGillPrefixLs[0] + self.ctrlSuf]
+
+		self.headCtrlLs = []
+		self.headBnLs = []
+		for i in xrange(self.secNum):
+			self.headBnLs += [self.compName + "_" + str(i+1) + self.bnSuf]
+			self.headCtrlLs += [self.compName + "_" + str(i+1) + self.ctrlSuf]
+
+		self.headCtrlShapeLs = [[[0.24424134321270735, -0.7694195822328146, 0.4568777859683162], [0.24593941651044599, 0.6484609783471149, 0.4568777859683162], [0.24593941651044599, 0.6484609783471149, -0.4568777859683162], [0.24424134321270735, -0.7694195822328146, -0.4568777859683162], [0.24424134321270735, -0.7694195822328146, 0.4568777859683162], [0.24424134321270735, -0.7694195822328146, 0.4568777859683162]], [[0.07994014468667704, -0.6942101581939167, 0.38605220750935804], [0.08163821798441567, 0.5850750471603137, 0.38605220750935804], [0.08163821798441567, 0.5850750471603137, -0.38605220750935804], [0.07994014468667704, -0.6942101581939167, -0.38605220750935804], [0.07994014468667704, -0.6942101581939167, 0.38605220750935804], [0.07994014468667704, -0.6942101581939167, 0.38605220750935804]]]
+		self.gillCtrlShapeLs = [[[0.34429350829745364, 0.2586236197253903, 0.08052508552033154], [0.30539567654255984, -0.2586236197253903, 0.10792686908613491], [0.1726396991601099, -0.46826454325832273, -0.0805250855203319], [0.2115375309150037, 0.46826454325832273, -0.10792686908613533], [0.34429350829745364, 0.2586236197253903, 0.08052508552033154], [0.34429350829745364, 0.2586236197253903, 0.08052508552033154]]]
+		self.jawCtrlShapeLs = [[[0.20496979762658663, 0.2654861937040582, 0.16209816510443523], [0.44299483007210216, -0.02000690318290629, 0.061384585555537684], [0.44299483007210216, -0.02000690318290629, -0.061384585555537684], [0.20496979762658663, 0.2654861937040582, -0.16209816510443523], [0.20496979762658663, 0.2654861937040582, 0.16209816510443523], [0.06091989319150838, 0.03859841125016042, 0.332128410460509], [0.06091989319150838, 0.03859841125016042, -0.332128410460509], [0.38823565275532884, -0.1509141026092611, -0.061384585555537684], [0.38823565275532884, -0.1509141026092611, 0.061384585555537684], [0.06091989319150838, 0.03859841125016042, 0.332128410460509], [0.38823565275532884, -0.1509141026092611, 0.061384585555537684], [0.44299483007210216, -0.02000690318290629, 0.061384585555537684], [0.44299483007210216, -0.02000690318290629, -0.061384585555537684], [0.38823565275532884, -0.1509141026092611, -0.061384585555537684], [0.06091989319150838, 0.03859841125016042, -0.332128410460509], [0.20496979762658663, 0.2654861937040582, -0.16209816510443523], [0.20496979762658663, 0.2654861937040582, -0.16209816510443523]], [[0.11070407270799235, 0.05519623612088831, 0.2692413437693746], [0.39968962152361254, -0.14041670365469985, 0.08300142208316369], [0.39968962152361254, -0.14041670365469985, -0.08300142208316369], [0.11070407270799235, 0.05519623612088831, -0.2692413437693746], [0.11070407270799235, 0.05519623612088831, 0.2692413437693746], [-0.09093821350321367, -0.17627421192253245, 0.13808872934931407], [-0.09093821350321367, -0.17627421192253245, -0.13808872934931407], [0.3239809676169649, -0.20959853180748478, -0.08300142208316369], [0.3239809676169649, -0.20959853180748478, 0.08300142208316369], [-0.09093821350321367, -0.17627421192253245, 0.13808872934931407], [0.3239809676169649, -0.20959853180748478, 0.08300142208316369], [0.39968962152361254, -0.14041670365469985, 0.08300142208316369], [0.39968962152361254, -0.14041670365469985, -0.08300142208316369], [0.3239809676169649, -0.20959853180748478, -0.08300142208316369], [-0.09093821350321367, -0.17627421192253245, -0.13808872934931407], [0.11070407270799235, 0.05519623612088831, -0.2692413437693746], [0.11070407270799235, 0.05519623612088831, -0.2692413437693746]]]
+
+
+		self.autoCtrl = self.compName + self.autoSuf + self.ctrlSuf
+		self.autoShape = [[0.0, 0.4072525915310115, 0.0], [0.0, 0.27150172768734115, -0.27150172768734115], [0.0, 0.0, -0.4072525915310115], [0.0, -0.27150172768734115, -0.27150172768734115], [0.0, -0.4072525915310115, 0.0], [0.0, -0.27150172768734115, 0.27150172768734115], [0.0, 0.0, 0.4072525915310115], [0.0, 0.27150172768734115, 0.27150172768734115], [0.0, 0.4072525915310115, 0.0], [0.27150172768734115, 0.27150172768734115, 0.0], [0.4072525915310115, 0.0, 0.0], [0.27150172768734115, -0.27150172768734115, 0.0], [0.0, -0.4072525915310115, 0.0], [-0.27150172768734115, -0.27150172768734115, 0.0], [-0.4072525915310115, 0.0, 0.0], [-0.27150172768734115, 0.27150172768734115, 0.0], [0.0, 0.4072525915310115, 0.0], [0.0, 0.4072525915310115, 0.0]]
+		self.masterString = "float $blend = auto_ctrl.master_blend * COMPONENT_auto_ctrl.master_blend;\nfloat $freq = auto_ctrl.master_speed * COMPONENT_auto_ctrl.master_speed * COMPONENT_auto_ctrl.section_NUM_speed/12;\nfloat $delay = auto_ctrl.master_delay + COMPONENT_auto_ctrl.master_delay + COMPONENT_auto_ctrl.section_NUM_delay;\nfloat $amp = auto_ctrl.master_amp * COMPONENT_auto_ctrl.master_amp*5 *COMPONENT_auto_ctrl.section_NUM_amp;\nCOMPONENT_NUM_ctrl_auto.rotateY = sin((auto_ctrl.time * $freq) + $delay) * $amp * $blend;"
+
+		self.shaperCtrl = self.compName + self.shaperSuf + self.ctrlSuf
+		self.shaperShape = [[0.0, 0.12305783963900688, -0.12305783963900688], [0.0, 0.12305783963900688, -0.24611567927801375], [-6.831082346392785e-17, -0.12305783963900688, -0.24611567927801375], [-3.415541173196392e-17, -0.12305783963900688, -0.12305783963900688], [-8.197298815671341e-17, -0.24611567927801375, -0.12305783963900688], [-3.415541173196392e-17, -0.24611567927801375, 0.12305783963900688], [0.0, -0.12305783963900688, 0.12305783963900688], [0.0, -0.12305783963900688, 0.24611567927801375], [6.831082346392785e-17, 0.12305783963900688, 0.24611567927801375], [3.415541173196392e-17, 0.12305783963900688, 0.12305783963900688], [8.197298815671341e-17, 0.24611567927801375, 0.12305783963900688], [3.415541173196392e-17, 0.24611567927801375, -0.12305783963900688], [0.0, 0.12305783963900688, -0.12305783963900688], [0.0, 0.12305783963900688, -0.12305783963900688], [0.0, 0.12305783963900688, -0.12305783963900688]]
+	
+
+
+
+	def build(self):
+		cmds.select(clear = True)
+		for i in xrange(self.buildJntNum):
+			cmds.joint(name = self.headBuildLs[i])
+		self.setTransRotLs(self.headBuildLs, self.headBuildTransRotLs)
+
+		cmds.select(clear = True)
+		for i in xrange(len(self.jawBuildLs)):
+			cmds.joint(name = self.jawBuildLs[i])
+			cmds.joint(name = self.jawTipBuildLs[i])
+			cmds.setAttr(self.jawTipBuildLs[i] + ".translate", 1, 0, 0, type = "double3")
+		cmds.parent(self.jawBuildLs, self.headBuildLs[1])
+		self.setTransRotLs(self.jawBuildLs, self.jawBuildTransRotLs)
+
+		cmds.select(clear = True)
+		cmds.joint(name = self.gillBuildLs[0])
+		cmds.joint(name = self.gillTipBuildLs[0])
+		cmds.setAttr(self.gillTipBuildLs[0] + ".translate", 1, 0, 0, type = "double3")
+		cmds.parent(self.gillBuildLs[0], self.headBuildLs[0])
+		self.setTransRotLs(self.gillBuildLs, self.gillBuildTransRotLs)
+
+
+	def finish(self):
+		
+		self.headBnTransRotLs = self.getTransRotLs(self.headBuildLs)[:-1]
+		self.createJointChain(self.headBnLs, self.headBnTransRotLs)
+		
+		self.jawBnTransRotLs = self.getTransRotLs(self.jawBuildLs)
+		for i in xrange(len(self.jawBnLs)):
+			cmds.select(clear = True)
+			cmds.joint(name = self.jawBnLs[i])
+			cmds.parent(self.jawBnLs[i], self.headBnLs[-1])
+		self.setTransRotLs(self.jawBnLs, self.jawBnTransRotLs)
+
+		self.gillBnTransRotLs = self.getTransRotLs(self.gillBuildLs)
+		cmds.select(clear = True)
+		cmds.joint(name = self.gillBnLs[0])
+		cmds.parent(self.gillBnLs[0], self.headBnLs[0])
+		self.setTransRotLs(self.gillBnLs, self.gillBnTransRotLs)
+
+		self.rtGillBnLs = cmds.mirrorJoint(self.gillBnLs[0], mirrorYZ = True, mirrorBehavior = True, searchReplace = ["Lf", "Rt"])
+
+		headRootCtrlMat = ()
+		# create fk ctrl
+		for i in xrange(self.secNum):
+			crtCtrl = self.createCtrl(self.headCtrlShapeLs[i], "curve", self.headCtrlLs[i])
+			cmds.select(clear = True)
+			crtAuto = cmds.createNode("transform", name = self.headCtrlLs[i] + "_auto")
+			cmds.select(clear = True)
+			crtRef = cmds.createNode("transform", name = self.headCtrlLs[i] + "_ref")
+			cmds.parent(crtCtrl, crtAuto)
+			cmds.parent(crtAuto, crtRef)
+			crtMat = cmds.xform(self.headBnLs[i], q= True, m = True, ws = True)
+			if i == 0:
+				headRootCtrlMat = crtMat
+			if i != 0:
+				cmds.parent(crtRef, self.headCtrlLs[i-1])
+			cmds.xform(crtRef, m = crtMat, ws = True)
+
+		# create gill ctrl
+		self.createCtrl(self.gillCtrlShapeLs[0], "curve", self.gillCtrlLs[0])
+		cmds.select(clear = True)
+		gillAuto = cmds.createNode("transform", name = self.gillCtrlLs[0] + "_auto")
+		cmds.select(clear = True)
+		gillRef = cmds.createNode("transform", name = self.gillCtrlLs[0] + self.refSuf)
+		cmds.parent(self.gillCtrlLs[0], gillAuto)
+		cmds.parent(gillAuto, gillRef)
+		gillMatrix = cmds.xform(self.gillBnLs[0], q = True, m = True, ws = True)
+		cmds.xform(gillRef, m = gillMatrix, ws = True)
+		cmds.parent(gillRef, self.headCtrlLs[0])
+		
+		cmds.select(clear = True)
+		temp = cmds.createNode("transform")
+		rtTempMatrix = cmds.xform(self.rtGillBnLs[0], m = True, ws = True, q = True)
+		cmds.xform(temp, matrix = rtTempMatrix, worldSpace = True)
+		cmds.setAttr(temp + ".rotateX", -cmds.getAttr(temp + ".rotateX"))
+		cmds.setAttr(temp + ".rotateY", -cmds.getAttr(temp + ".rotateY"))
+		cmds.setAttr(temp + ".rotateZ", 180+cmds.getAttr(temp + ".rotateZ"))
+		cmds.setAttr(temp+".scaleZ", -1)
+		rtGillMatrix = cmds.xform(temp, worldSpace = True, matrix = True, query = True)
+		cmds.delete(temp)
+
+		self.createCtrl(self.gillCtrlShapeLs[0], "curve", self.rtGillCtrlLs[0])
+		cmds.select(clear = True)
+		rtGillAuto = cmds.createNode("transform", name = self.rtGillCtrlLs[0] + "_auto")
+		cmds.select(clear = True)
+		rtGillRef = cmds.createNode("transform", name = self.rtGillCtrlLs[0] + self.refSuf)
+		cmds.parent(self.rtGillCtrlLs[0], rtGillAuto)
+		cmds.parent(rtGillAuto, rtGillRef)
+		cmds.xform(rtGillRef, m = rtGillMatrix, ws = True)
+		cmds.parent(rtGillRef, self.headCtrlLs[0])
+
+		for i in xrange(len(self.jawCtrlLs)):
+			self.createCtrl(self.jawCtrlShapeLs[i], "curve", self.jawCtrlLs[i])
+			cmds.select(clear = True)
+			crtAuto = cmds.createNode("transform", name = self.jawCtrlLs[i] + "_auto")
+			cmds.select(clear = True)
+			crtRef = cmds.createNode("transform", name = self.jawCtrlLs[i] + self.refSuf)
+			cmds.select(clear = True)
+			cmds.parent(self.jawCtrlLs[i], crtAuto)
+			cmds.parent(crtAuto, crtRef)
+			cmds.parent(crtRef, self.headCtrlLs[-1])
+			crtMatrix = cmds.xform(self.jawBnLs[i], q = True, ws = True, m = True)
+			cmds.xform(crtRef, ws = True, m = crtMatrix)
+
+		# create auto ctrl
+		self.createCtrl(self.autoShape, "curve", self.autoCtrl)
+		autoRef = cmds.createNode("transform", name = self.autoCtrl + "_ref")
+		cmds.parent(self.autoCtrl, autoRef)
+		cmds.xform(autoRef, matrix = headRootCtrlMat, ws = True)
+		cmds.parent(autoRef, self.headCtrlLs[0])
+		setRGBColor(self.autoCtrl, (0, 0.5, 1))
+		
+
+		# create master attributes
+		cmds.addAttr(self.autoCtrl, longName = "master_blend", min = 0, max = 1, attributeType = "double", defaultValue = 0)
+		cmds.setAttr(self.autoCtrl + ".master_blend", lock = False, channelBox = True)
+		cmds.setAttr(self.autoCtrl + ".master_blend", keyable = True)
+		cmds.addAttr(self.autoCtrl, longName = "master_delay", attributeType = "double", defaultValue = 0)
+		cmds.setAttr(self.autoCtrl + ".master_delay", lock = False, channelBox = True)
+		cmds.setAttr(self.autoCtrl + ".master_delay", keyable = True)
+		cmds.addAttr(self.autoCtrl, longName = "master_amp", attributeType = "double", defaultValue = 1)
+		cmds.setAttr(self.autoCtrl + ".master_amp", lock = False, channelBox = True)
+		cmds.setAttr(self.autoCtrl + ".master_amp", keyable = True)
+		cmds.addAttr(self.autoCtrl, longName = "master_speed", attributeType = "double", defaultValue = 1)
+		cmds.setAttr(self.autoCtrl + ".master_speed", lock = False, channelBox = True)
+		cmds.setAttr(self.autoCtrl + ".master_speed", keyable = True)
+
+		# create gill attributes
+		cmds.addAttr(self.autoCtrl, attributeType = "enum", 
+					longName = "Lf_gill", enumName = "_________")
+		cmds.setAttr(self.autoCtrl + ".Lf_gill", lock = True, channelBox = True)
+		cmds.setAttr(self.autoCtrl + ".Lf_gill" , keyable = False)
+		cmds.addAttr(self.autoCtrl, longName = "Lf_gill_delay", attributeType = "double", defaultValue = 0)
+		cmds.setAttr(self.autoCtrl + ".Lf_gill_delay", lock = False, channelBox = True)
+		cmds.setAttr(self.autoCtrl + ".Lf_gill_delay", keyable = True)
+		cmds.addAttr(self.autoCtrl, longName = "Lf_gill_amp", attributeType = "double", defaultValue = 1)
+		cmds.setAttr(self.autoCtrl + ".Lf_gill_amp", lock = False, channelBox = True)
+		cmds.setAttr(self.autoCtrl + ".Lf_gill_amp", keyable = True)
+		cmds.addAttr(self.autoCtrl, longName = "Lf_gill_speed", attributeType = "double", defaultValue = 1)
+		cmds.setAttr(self.autoCtrl + ".Lf_gill_speed", lock = False, channelBox = True)
+		cmds.setAttr(self.autoCtrl + ".Lf_gill_speed", keyable = True)
+
+		cmds.addAttr(self.autoCtrl, attributeType = "enum", 
+					longName = "Rt_gill", enumName = "_________")
+		cmds.setAttr(self.autoCtrl + ".Rt_gill", lock = True, channelBox = True)
+		cmds.setAttr(self.autoCtrl + ".Rt_gill" , keyable = False)
+		cmds.addAttr(self.autoCtrl, longName = "Rt_gill_delay", attributeType = "double", defaultValue = 0)
+		cmds.setAttr(self.autoCtrl + ".Rt_gill_delay", lock = False, channelBox = True)
+		cmds.setAttr(self.autoCtrl + ".Rt_gill_delay", keyable = True)
+		cmds.addAttr(self.autoCtrl, longName = "Rt_gill_amp", attributeType = "double", defaultValue = 1)
+		cmds.setAttr(self.autoCtrl + ".Rt_gill_amp", lock = False, channelBox = True)
+		cmds.setAttr(self.autoCtrl + ".Rt_gill_amp", keyable = True)
+		cmds.addAttr(self.autoCtrl, longName = "Rt_gill_speed", attributeType = "double", defaultValue = 1)
+		cmds.setAttr(self.autoCtrl + ".Rt_gill_speed", lock = False, channelBox = True)
+		cmds.setAttr(self.autoCtrl + ".Rt_gill_speed", keyable = True) 
+
+
+		# add jaw attributes
+		cmds.addAttr(self.autoCtrl, attributeType = "enum", 
+					longName = "upper_jaw", enumName = "_________")
+		cmds.setAttr(self.autoCtrl + ".upper_jaw", lock = True, channelBox = True)
+		cmds.setAttr(self.autoCtrl + ".upper_jaw" , keyable = False)
+		cmds.addAttr(self.autoCtrl, longName = "upper_jaw_delay", attributeType = "double", defaultValue = 0)
+		cmds.setAttr(self.autoCtrl + ".upper_jaw_delay", lock = False, channelBox = True)
+		cmds.setAttr(self.autoCtrl + ".upper_jaw_delay", keyable = True)
+		cmds.addAttr(self.autoCtrl, longName = "upper_jaw_amp", attributeType = "double", defaultValue = 1)
+		cmds.setAttr(self.autoCtrl + ".upper_jaw_amp", lock = False, channelBox = True)
+		cmds.setAttr(self.autoCtrl + ".upper_jaw_amp", keyable = True)
+		cmds.addAttr(self.autoCtrl, longName = "upper_jaw_speed", attributeType = "double", defaultValue = 1)
+		cmds.setAttr(self.autoCtrl + ".upper_jaw_speed", lock = False, channelBox = True)
+		cmds.setAttr(self.autoCtrl + ".upper_jaw_speed", keyable = True)
+
+		cmds.addAttr(self.autoCtrl, attributeType = "enum", 
+					longName = "lower_jaw", enumName = "_________")
+		cmds.setAttr(self.autoCtrl + ".lower_jaw", lock = True, channelBox = True)
+		cmds.setAttr(self.autoCtrl + ".lower_jaw" , keyable = False)
+		cmds.addAttr(self.autoCtrl, longName = "lower_jaw_delay", attributeType = "double", defaultValue = 0)
+		cmds.setAttr(self.autoCtrl + ".lower_jaw_delay", lock = False, channelBox = True)
+		cmds.setAttr(self.autoCtrl + ".lower_jaw_delay", keyable = True)
+		cmds.addAttr(self.autoCtrl, longName = "lower_jaw_amp", attributeType = "double", defaultValue = 1)
+		cmds.setAttr(self.autoCtrl + ".lower_jaw_amp", lock = False, channelBox = True)
+		cmds.setAttr(self.autoCtrl + ".lower_jaw_amp", keyable = True)
+		cmds.addAttr(self.autoCtrl, longName = "lower_jaw_speed", attributeType = "double", defaultValue = 1)
+		cmds.setAttr(self.autoCtrl + ".lower_jaw_speed", lock = False, channelBox = True)
+		cmds.setAttr(self.autoCtrl + ".lower_jaw_speed", keyable = True)
+
+		# connect to auto control
+
+		# 
+		cmds.select(clear = True)
+		ctrlGrp = cmds.createNode("transform", name = self.CTRLname)
+		cmds.parent(self.headCtrlLs[0] + self.refSuf, ctrlGrp)
+		cmds.select(clear = True)
+		rigGrp = cmds.joint(name = self.RIGname)
+		cmds.parent(self.headBnLs[0], rigGrp)
+
+		# add parent and scale constraint
+		for i in xrange(self.secNum):
+			cmds.parentConstraint(self.headCtrlLs[i], self.headBnLs[i], mo = True)
+			cmds.scaleConstraint(self.headCtrlLs[i], self.headBnLs[i], mo = True)
+		cmds.parentConstraint(self.gillCtrlLs[0], self.gillBnLs[0], mo = True)
+		cmds.scaleConstraint(self.gillCtrlLs[0], self.gillBnLs[0], mo = True)
+		cmds.parentConstraint(self.rtGillCtrlLs[0], self.rtGillBnLs[0], mo = True)
+		cmds.scaleConstraint(self.rtGillCtrlLs[0], self.rtGillBnLs[0], mo = True)
+		for i in xrange(len(self.jawCtrlLs)):
+			cmds.parentConstraint(self.jawCtrlLs[i], self.jawBnLs[i], mo = True)
+			cmds.scaleConstraint(self.jawCtrlLs[i], self.jawBnLs[i], mo = True)
+		cmds.delete(self.jawBuildLs)
+		cmds.delete(self.gillBuildLs)
+		cmds.delete(self.headBuildLs)
+
+# headComp = head()
+# headComp.build()
+# headComp.finish()
+
+
+
+
+
 def placerBuildButtonWrapper(*args):
 	placerComp = placer()
 	placerComp.build()
@@ -388,7 +719,7 @@ def placerFinalButtonWrapper(*args):
 def genericBuildButtonWrapper(nameField, numField, *args):
 	compName = cmds.textField(nameField, q = True, text = True)
 	secNum = int(cmds.textField(numField, q = True, text = True))
-	genericComp = genericComponent(compName, None, secNum)
+	genericComp = genericComponent(compName, secNum)
 	genericComp.build()
 	return None
 
