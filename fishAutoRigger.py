@@ -897,17 +897,44 @@ def addButtonCmds(buttonLs, cmdsLs):
 		crtCmd = cmdsLs[i]
 		cmds.button(crtButton, edit = True, command = cmdsLs[i])
 
+
+def explainMenuItemWrapper(width, subwindowWidth, subwindowHeight, borderWidth, 
+	rowSpace, *args):
+	explainWindow = cmds.window(title = "Explain", 
+		widthHeight = (subwindowWidth, subwindowHeight), sizeable = False)
+	cmds.columnLayout(columnWidth = subwindowWidth - borderWidth*2,
+		columnOffset = ("left", borderWidth), rowSpacing = rowSpace)
+	cmds.text("Auto Rigging Tool built by Fred (Zhehao) Qiao at SCAD")
+	cmds.text("For project Oligocene")
+	cmds.text("Apr.2020")
+	cmds.text("qiaozhehao951115@gmail.com")
+	cmds.showWindow(explainWindow)
+
+
+
 def main():
 	WINDOWNAME = "Oligocene Fish Auto Rigger"
-	WIDTH = 180
-	HEIGHT = 380
-	BORDERWIDTH = 5
+	WIDTH = 200
+	HEIGHT = 360
+	BORDERWIDTH = 3
 	ROWSPACE = 5
 	SEPAHEIGHT = 10
-	SUBWINODWWIDTH = 385
-	SUBWINDOWHEIGHT = 340
+	SUBWINODWWIDTH = 340
+	SUBWINDOWHEIGHT = 90
 	mainWindow = cmds.window(menuBar = True, title = WINDOWNAME, 
-		widthHeight = (WIDTH+5, HEIGHT), sizeable = False)
+		widthHeight = (WIDTH+12, HEIGHT), sizeable = False)
+
+
+	# help menu on the top
+	cmds.menu(label = "About", tearOff = False)
+	cmds.menuItem(label = "Author Info", command = partial(explainMenuItemWrapper, 
+		WIDTH, SUBWINODWWIDTH, SUBWINDOWHEIGHT, BORDERWIDTH, ROWSPACE))
+
+
+	cmds.columnLayout(columnWidth = WIDTH - BORDERWIDTH*2, 
+		columnOffset = ("left", BORDERWIDTH), rowSpacing = ROWSPACE)
+
+
 	cmds.columnLayout(columnWidth = WIDTH - BORDERWIDTH*2, 
 		columnOffset = ("left", BORDERWIDTH), rowSpacing = ROWSPACE)
 
