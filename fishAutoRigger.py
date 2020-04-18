@@ -817,7 +817,9 @@ def hierarchyButtonWrapper(*args):
 	if (cmds.objExists(rootName) == False):
 		cmds.createNode("transform", name = rootName)
 		cmds.createNode("transform", name = NTName)
-		cmds.createNode("transform", name = RIGName)
+		cmds.select(clear = True)
+		cmds.joint(name = RIGName)
+		cmds.select(clear = True)
 		cmds.createNode("transform", name = CTRLName)
 		cmds.createNode("transform", name = GEOName)
 		cmds.parent(NTName, rootName)
